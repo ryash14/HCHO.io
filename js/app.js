@@ -766,10 +766,10 @@ function onStatesSelected(stateNames) {
   if (S.layers.stateMask) S.layers.stateMask.bringToFront();
   if (S.layers.stateHighlight) S.layers.stateHighlight.bringToFront();
   
-  // Also bring markers/wind/fires above mask
-  if (S.layers.hotspots) S.layers.hotspots.bringToFront();
-  if (S.layers.fires) S.layers.fires.bringToFront();
-  if (S.layers.pixelMarker) S.layers.pixelMarker.bringToFront();
+  // Also bring markers/wind/fires above mask (marker groups do not have bringToFront)
+  if (S.layers.hotspots && typeof S.layers.hotspots.bringToFront === 'function') S.layers.hotspots.bringToFront();
+  if (S.layers.fires && typeof S.layers.fires.bringToFront === 'function') S.layers.fires.bringToFront();
+  if (S.layers.pixelMarker && typeof S.layers.pixelMarker.bringToFront === 'function') S.layers.pixelMarker.bringToFront();
 
   // Zoom to fit all selected states
   const bounds = S.layers.stateHighlight.getBounds();
@@ -779,28 +779,39 @@ function onStatesSelected(stateNames) {
 
 // ─── Map Click → Pixel Time Series ─────────────────────────────────────────
 
-// Helper to format grid coordinates (match python static builder output)
-function formatGridCoord(val) {
-  const rounded = Math.round(val * 4) / 4;
-  let s = rounded.toString();
-  if (!s.includes('.')) {
-    s += '.0';
-  }
-  return s;
+// Helpers to map click coordinates to nearest grid points in the dataset
+function getNearestLat(lat) {
+  let idx = Math.round((lat - 7.0) / 0.25);
+  let gridLat = 7.0 + idx * 0.25;
+  if (gridLat < 7.0) gridLat = 7.0;
+  if (gridLat > 37.0) gridLat = 37.0;
+  let s = parseFloat(gridLat.toFixed(2)).toString();
+  if (!s.includes('.')) s += '.0';
+  return { val: gridLat, str: s };
+}
+
+function getNearestLon(lon) {
+  let idx = Math.round((lon - 68.2) / 0.25);
+  let gridLon = 68.2 + idx * 0.25;
+  if (gridLon < 68.2) gridLon = 68.2;
+  if (gridLon > 97.5) gridLon = 97.5;
+  let s = parseFloat(gridLon.toFixed(2)).toString();
+  if (!s.includes('.')) s += '.0';
+  return { val: gridLon, str: s };
 }
 
 // Client-side pixel data lookup
 async function fetchPixelGridData(lat, lon) {
-  const latKey = formatGridCoord(lat);
-  const lonKey = formatGridCoord(lon);
+  const targetLat = getNearestLat(lat);
+  const targetLon = getNearestLon(lon);
   
   try {
-    const resp = await safeFetch(`/processed_data/pixels/lat_${latKey}.json`);
+    const resp = await safeFetch(`/processed_data/pixels/lat_${targetLat.str}.json`);
     if (!resp) return null;
     const json = await resp.json();
     
     // Check both standard string and integer-converted keys (in case rounding differences exist)
-    const ts = json[lonKey] || json[parseFloat(lonKey).toString()];
+    const ts = json[targetLon.str] || json[parseFloat(targetLon.str).toString()];
     if (!ts) return null;
     
     // Map compact {d, v} format back to full {date, value} format, reverting divided HCHO
@@ -939,14 +950,16 @@ async function loadNearbyPixels(lat, lon) {
     const pixel_lon = 0.25;
     const yearStr = S.year === 'All_Years' ? '2024' : S.year;
 
-    const latOffsets = [-0.25, 0, 0.25];
-    const lonOffsets = [-0.25, 0, 0.25];
+    // We use indices (-1, 0, 1) to offset from the nearest grid point
+    const offsets = [-1, 0, 1];
+    
+    const centerLatObj = getNearestLat(lat);
+    const centerLonObj = getNearestLon(lon);
 
     // Fetch the 3 distinct latitude JSON files concurrently
-    const latPromises = latOffsets.map(dy => {
-      const targetLat = lat + dy;
-      const latKey = formatGridCoord(targetLat);
-      return safeFetch(`/processed_data/pixels/lat_${latKey}.json`)
+    const latPromises = offsets.map(dy => {
+      const targetLat = getNearestLat(centerLatObj.val + dy * 0.25);
+      return safeFetch(`/processed_data/pixels/lat_${targetLat.str}.json`)
         .then(r => r ? r.json() : null)
         .catch(() => null);
     });
@@ -955,18 +968,17 @@ async function loadNearbyPixels(lat, lon) {
     const results = [];
 
     // Parse the grid
-    latOffsets.forEach((dy, rowIdx) => {
-      const targetLat = lat + dy;
+    offsets.forEach((dy, rowIdx) => {
+      const targetLat = getNearestLat(centerLatObj.val + dy * 0.25);
       const latJson = latJsons[rowIdx];
 
-      lonOffsets.forEach((dx, colIdx) => {
-        const targetLon = lon + dx;
-        const lonKey = formatGridCoord(targetLon);
-        const offset = `(${dx},${dy})`;
+      offsets.forEach((dx, colIdx) => {
+        const targetLon = getNearestLon(centerLonObj.val + dx * 0.25);
+        const offset = `(${dx},${dy})`; // Keep the same string representation for UI
 
         let ts = null;
         if (latJson) {
-          const rawTs = latJson[lonKey] || latJson[parseFloat(lonKey).toString()];
+          const rawTs = latJson[targetLon.str] || latJson[parseFloat(targetLon.str).toString()];
           if (rawTs) {
             ts = rawTs
               .map(pt => ({
@@ -979,7 +991,7 @@ async function loadNearbyPixels(lat, lon) {
 
         if (ts && ts.length > 0) {
           results.push({
-            pixel: { lat: targetLat.toFixed(2), lon: targetLon.toFixed(2), offset: offset },
+            pixel: { lat: targetLat.val.toFixed(2), lon: targetLon.val.toFixed(2), offset: offset },
             data: ts
           });
         }
