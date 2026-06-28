@@ -1,0 +1,56 @@
+{
+  "years": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "seasons": [
+    "Annual",
+    "Kharif",
+    "Rabi"
+  ],
+  "hotspots": {
+    "Hotspots_2019_Annual": 18,
+    "Hotspots_2019_Kharif": 53,
+    "Hotspots_2019_Rabi": 41,
+    "Hotspots_2020_Annual": 23,
+    "Hotspots_2020_Kharif": 54,
+    "Hotspots_2020_Rabi": 25,
+    "Hotspots_2021_Annual": 26,
+    "Hotspots_2021_Kharif": 50,
+    "Hotspots_2021_Rabi": 39,
+    "Hotspots_2022_Annual": 26,
+    "Hotspots_2022_Kharif": 54,
+    "Hotspots_2022_Rabi": 31,
+    "Hotspots_2023_Annual": 17,
+    "Hotspots_2023_Kharif": 57,
+    "Hotspots_2023_Rabi": 31,
+    "Hotspots_2024_Annual": 21,
+    "Hotspots_2024_Kharif": 56,
+    "Hotspots_2024_Rabi": 37,
+    "Hotspots_2025_Annual": 20,
+    "Hotspots_2025_Kharif": 57,
+    "Hotspots_2025_Rabi": 28,
+    "Hotspots_All_Years_Annual": 13,
+    "Hotspots_All_Years_Kharif": 33,
+    "Hotspots_All_Years_Rabi": 25,
+    "Persistent_Annual": 10,
+    "Persistent_Kharif": 19,
+    "Persistent_Rabi": 17
+  },
+  "fires": {
+    "Absolute_Final_Kharif": {
+      "grid_cells": 170,
+      "total_fires": 66248
+    },
+    "Absolute_Final_Rabi": {
+      "grid_cells": 298,
+      "total_fires": 75675
+    }
+  },
+  "generated_at": "2026-06-26T16:16:15"
+}

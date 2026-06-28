@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HCHO India Observatory · Tropospheric Formaldehyde</title>
+<meta name="description" content="Interactive geospatial dashboard for HCHO (Formaldehyde) tropospheric column density over India. Hotspot detection, fire attribution, wind transport, and state-wise analysis.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="css/style.css?v=4">
+</head>
+<body>
+
+<!-- ═══ LOADER ═══ -->
+<div id="loader">
+  <div class="loader-logo">🛰</div>
+  <div class="ll">HCHO INDIA OBSERVATORY</div>
+  <div class="lb"><div class="lp"></div></div>
+  <div class="lm" id="lmsg">INITIALIZING…</div>
+</div>
+
+<div id="app" data-theme="dark">
+
+<!-- ── HEADER ── -->
+<div id="hdr">
+  <button class="hbtn hbtn-icon" title="Toggle sidebar (B)" onclick="toggleSidebar()">☰</button>
+  <div class="hdr-brand">
+    <div class="hdr-logo">🛰</div>
+    <div id="header">
+    <div class="header-title">HCHO India Observatory</div>
+    <div id="controls"><div class="hdr-sub">TROPOMI · Formaldehyde Column · 2019–2025</div></div>
+    </div>
+  </div>
+
+  <div class="hdr-sep"></div>
+
+  <div class="bm-group">
+    <button class="bm-btn on" data-bm="dark" onclick="switchBasemap(this)">Dark</button>
+    <button class="bm-btn" data-bm="light" onclick="switchBasemap(this)">Light</button>
+    <button class="bm-btn" data-bm="topo" onclick="switchBasemap(this)">Topo</button>
+    <button class="bm-btn" data-bm="streets" onclick="switchBasemap(this)">Streets</button>
+  </div>
+
+  <div class="hdr-space"></div>
+
+  <div class="status-badge" id="server-badge">
+    <div class="status-dot" id="server-dot"></div>
+    <span id="server-status">Checking…</span>
+  </div>
+
+  <div class="hdr-sep"></div>
+
+  <button class="hbtn hbtn-icon" title="Toggle theme" onclick="toggleTheme()">◑</button>
+</div>
+
+<!-- ── MAIN ── -->
+<div id="main">
+
+<!-- ── SIDEBAR ── -->
+<div id="sb">
+<div id="sb-inner">
+
+  <!-- Year Selection -->
+  <div class="sb-sec">
+    <div class="sec-lbl">Year</div>
+    <div class="year-grid" id="year-grid">
+      <button class="year-btn" data-year="2019">2019</button>
+      <button class="year-btn" data-year="2020">2020</button>
+      <button class="year-btn" data-year="2021">2021</button>
+      <button class="year-btn" data-year="2022">2022</button>
+      <button class="year-btn" data-year="2023">2023</button>
+      <button class="year-btn on" data-year="2024">2024</button>
+      <button class="year-btn" data-year="2025">2025</button>
+      <button class="year-btn special" data-year="All_Years">ALL</button>
+    </div>
+  </div>
+
+  <!-- Season Selection -->
+  <div class="sb-sec">
+    <div class="sec-lbl">Season</div>
+    <div class="season-tabs" id="season-tabs">
+      <button class="season-btn on" data-season="Annual">Annual</button>
+      <button class="season-btn" data-season="Kharif">Kharif</button>
+      <button class="season-btn" data-season="Rabi">Rabi</button>
+    </div>
+  </div>
+
+  <!-- Layers -->
+  <div class="sb-sec">
+    <div class="sec-lbl">Map Layers</div>
+    <div class="tog-row"><span class="tog-lbl">HCHO overlay</span><label class="sw"><input type="checkbox" id="tg-hcho" checked><div class="sw-sl"></div></label></div>
+    <div class="tog-row"><span class="tog-lbl">Hotspots</span><label class="sw"><input type="checkbox" id="tg-hotspots"><div class="sw-sl"></div></label></div>
+    <div class="tog-row"><span class="tog-lbl">Persistent hotspots</span><label class="sw"><input type="checkbox" id="tg-persistent"><div class="sw-sl"></div></label></div>
+    <div class="tog-row"><span class="tog-lbl">Fire activity</span><label class="sw"><input type="checkbox" id="tg-fires"><div class="sw-sl"></div></label></div>
+    <div class="tog-row"><span class="tog-lbl">Wind vectors</span><label class="sw"><input type="checkbox" id="tg-wind"><div class="sw-sl"></div></label></div>
+    <div class="tog-row"><span class="tog-lbl">India boundary</span><label class="sw"><input type="checkbox" id="tg-india" checked><div class="sw-sl"></div></label></div>
+    <div class="tog-row"><span class="tog-lbl">State borders</span><label class="sw"><input type="checkbox" id="tg-states"><div class="sw-sl"></div></label></div>
+    <div class="tog-row"><span class="tog-lbl">Core burn region</span><label class="sw"><input type="checkbox" id="tg-core"><div class="sw-sl"></div></label></div>
+  </div>
+
+  <!-- State-wise HCHO Multi-select -->
+  <div class="sb-sec">
+    <div class="sec-lbl">State-wise HCHO</div>
+    <div id="state-select-container"></div>
+  </div>
+
+  <!-- HCHO Legend -->
+  <div class="sb-sec">
+    <div class="sec-lbl">HCHO Legend</div>
+    <div class="colorbar-wrap">
+      <div class="colorbar"></div>
+      <div class="colorbar-labels">
+        <span>0</span><span>0.5</span><span>1.0</span><span>1.5</span><span>1.8</span>
+      </div>
+      <div class="colorbar-unit">×10¹⁶ molecules/cm²</div>
+    </div>
+  </div>
+
+  <!-- Quick Stats in sidebar -->
+  <div class="sb-sec">
+    <div class="sec-lbl">Statistics</div>
+    <div class="tog-row"><span class="tog-lbl">Hotspots</span><span class="info-val" id="sb-hotspot-count">—</span></div>
+    <div class="tog-row"><span class="tog-lbl">Cursor Lat</span><span class="info-val" id="sb-cursor-lat">—</span></div>
+    <div class="tog-row"><span class="tog-lbl">Cursor Lon</span><span class="info-val" id="sb-cursor-lon">—</span></div>
+    <div class="tog-row"><span class="tog-lbl">Pixel HCHO</span><span class="info-val" id="sb-pixel-val">—</span></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ── MAP & PANELS ── -->
+<div id="mc">
+  <div id="map-wrap">
+    <div id="map"></div>
+
+    <button id="map-sb-btn" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
+
+    <div class="map-ov" id="map-badge">HCHO · ANNUAL · 2024</div>
+
+    <!-- Info panel (click on features) -->
+    <div class="map-ov" id="info">
+      <button id="info-x" onclick="document.getElementById('info').classList.remove('vis')">×</button>
+      <div class="info-title" id="info-title">—</div>
+      <div id="info-body"></div>
+    </div>
+
+    <!-- Legend -->
+    <div class="map-ov" id="leg">
+      <div class="leg-title">Active Layers</div>
+      <div id="leg-body"></div>
+    </div>
+
+    <!-- Status message -->
+    <div class="map-ov" id="hs-msg"></div>
+
+    <!-- Coords -->
+    <div class="map-ov" id="coords-ov">—</div>
+    
+    <div id="map-ph">Loading map...</div>
+    
+    <!-- Legend -->
+    <div class="map-legend" id="hcho-legend">
+      <div style="font-size:10px; font-weight:600; margin-bottom:5px; color:var(--text); letter-spacing:0.05em">HCHO CONCENTRATION</div>
+      <div class="legend-bar"></div>
+      <div class="legend-labels">
+        <span>2.0e15</span>
+        <span>molec/cm²</span>
+        <span>1.8e16</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Strip -->
+  <div id="stats-strip">
+    <div class="sv"><span class="sv-lbl">Year</span><span class="sv-val accent" id="sv-year">2024</span></div>
+    <div class="sv-sep"></div>
+    <div class="sv"><span class="sv-lbl">Season</span><span class="sv-val" id="sv-season">Annual</span></div>
+    <div class="sv-sep"></div>
+    <div class="sv"><span class="sv-lbl">Hotspots</span><span class="sv-val" id="sv-hotspots">—</span></div>
+    <div class="sv-sep"></div>
+    <div class="sv"><span class="sv-lbl">Fire Cells</span><span class="sv-val" id="sv-fires">—</span></div>
+    <div class="sv-spacer"></div>
+    <div class="sv" style="align-items:flex-end"><span class="sv-lbl">Server</span><span class="sv-val" id="sv-server" style="font-size:9px">—</span></div>
+  </div>
+
+  <!-- Handle -->
+  <div id="handle" onclick="togglePanel()">
+    <div class="hbar"></div>
+    <span class="hlbl" id="hlbl">▲ Show Charts</span>
+  </div>
+
+  <!-- Chart Panel -->
+  <div id="panel">
+    <div id="ptabs">
+      <button class="ptab on" data-pv="trends">HCHO Trends</button>
+      <button class="ptab" data-pv="fire">Fire–HCHO</button>
+      <button class="ptab" data-pv="pixel">Pixel Detail</button>
+    </div>
+
+    <!-- Trends View -->
+    <div class="pview vis" id="pv-trends">
+      <div class="cpane">
+        <div class="ch"><span class="ct">Hotspot Count</span><span class="cs">per year/season</span>
+          <div class="ch-actions"><button class="ch-btn" onclick="downloadChart('c-hotspots')">↓</button><button class="ch-btn" onclick="fullscreenChart('c-hotspots')">↗</button></div>
+        </div>
+        <div class="cw"><canvas id="c-hotspots"></canvas></div>
+      </div>
+      <div class="cpane">
+        <div class="ch"><span class="ct">Fire Activity</span><span class="cs">total fires by season</span>
+          <div class="ch-actions"><button class="ch-btn" onclick="downloadChart('c-fires')">↓</button><button class="ch-btn" onclick="fullscreenChart('c-fires')">↗</button></div>
+        </div>
+        <div class="cw"><canvas id="c-fires"></canvas></div>
+      </div>
+      <div class="cpane">
+        <div class="ch"><span class="ct">Season Comparison</span><span class="cs">Kharif vs Rabi</span>
+          <div class="ch-actions"><button class="ch-btn" onclick="downloadChart('c-seasons')">↓</button><button class="ch-btn" onclick="fullscreenChart('c-seasons')">↗</button></div>
+        </div>
+        <div class="cw"><canvas id="c-seasons"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Fire-HCHO View -->
+    <div class="pview" id="pv-fire">
+      <div class="cpane" style="flex:2">
+        <div class="ch"><span class="ct">Fire–HCHO Correlation</span><span class="cs" id="cs-fire">select year & season</span>
+          <div class="ch-actions"><button class="ch-btn" onclick="downloadChart('c-corr')">↓</button><button class="ch-btn" onclick="fullscreenChart('c-corr')">↗</button></div>
+        </div>
+        <div class="cw"><canvas id="c-corr"></canvas></div>
+      </div>
+      <div class="cpane">
+        <div class="ch"><span class="ct">FRP Distribution</span><span class="cs">fire radiative power</span>
+          <div class="ch-actions"><button class="ch-btn" onclick="downloadChart('c-frp')">↓</button><button class="ch-btn" onclick="fullscreenChart('c-frp')">↗</button></div>
+        </div>
+        <div class="cw"><canvas id="c-frp"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Pixel Detail View -->
+    <div class="pview" id="pv-pixel">
+      <div class="cpane" style="flex:2">
+        <div class="ch"><span class="ct">Pixel Time Series</span><span class="cs" id="cs-pixel">click on the map to select a pixel</span>
+          <div class="ch-actions"><button class="ch-btn" onclick="downloadChart('c-pixel')" title="Download chart">↓</button><button class="ch-btn" onclick="fullscreenChart('c-pixel')">↗</button></div>
+        </div>
+        <div class="cw">
+          <canvas id="c-pixel"></canvas>
+          <div class="chart-placeholder" id="pixel-ph">
+            <div class="ph-icon">📍</div>
+            Click on the map to view<br>HCHO time series for a pixel
+          </div>
+        </div>
+      </div>
+      <div class="cpane">
+        <div class="ch"><span class="ct">Nearby Grid</span><span class="cs" id="cs-nearby">3×3 pixel comparison</span>
+          <div class="ch-actions">
+            <button class="ch-btn" onclick="downloadNearbyChart()" title="Download chart">↓</button>
+            <button class="ch-btn" onclick="enlargeNearbyGrid()" title="Enlarge grid">↗</button>
+          </div>
+        </div>
+        <div class="cw">
+          <div id="nearby-grid-container"></div>
+          <div class="chart-placeholder" id="nearby-ph">
+            <div class="ph-icon">🔲</div>
+            Select a pixel to compare<br>with neighbors
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- Fullscreen Chart Modal -->
+<div id="fs-overlay">
+  <div id="fs-box">
+    <div id="fs-hdr">
+      <div><div id="fs-title">Chart</div><div id="fs-sub"></div></div>
+      <div class="fs-acts">
+        <button class="fs-act" onclick="downloadFsChart()">↓ Download</button>
+        <button class="fs-act primary" onclick="closeFsChart()">× Close</button>
+      </div>
+    </div>
+    <div id="fs-body"><canvas id="fs-canvas"></canvas></div>
+  </div>
+</div>
+
+<script src="js/app.js?v=4"></script>
+</body>
+</html>
