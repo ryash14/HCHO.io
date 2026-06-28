@@ -814,10 +814,10 @@ async function fetchPixelGridData(lat, lon) {
     const ts = json[targetLon.str] || json[parseFloat(targetLon.str).toString()];
     if (!ts) return null;
     
-    // Map compact {d, v} format back to full {date, value} format, reverting divided HCHO
+    // Map compact [date, val] format back to full {date, value} format, reverting divided HCHO
     return ts.map(pt => ({
-      date: pt.d,
-      value: pt.v * 1e15
+      date: pt[0],
+      value: pt[1] * 1e15
     }));
   } catch (err) {
     console.error('Error fetching pixel grid:', err);
@@ -982,8 +982,8 @@ async function loadNearbyPixels(lat, lon) {
           if (rawTs) {
             ts = rawTs
               .map(pt => ({
-                date: pt.d,
-                value: pt.v * 1e15
+                date: pt[0],
+                value: pt[1] * 1e15
               }))
               .filter(pt => pt.date.startsWith(yearStr));
           }
