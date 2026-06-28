@@ -779,36 +779,6 @@ function onStatesSelected(stateNames) {
 
 // ─── Map Click → Pixel Time Series ─────────────────────────────────────────
 
-async function onMapClick(e) {
-  const { lat, lng } = e.latlng;
-
-  // Update sidebar stats
-  document.getElementById('sb-cursor-lat').textContent = lat.toFixed(3);
-  document.getElementById('sb-cursor-lon').textContent = lng.toFixed(3);
-
-  // Place marker
-  if (S.layers.pixelMarker) S.map.removeLayer(S.layers.pixelMarker);
-  S.layers.pixelMarker = L.marker([lat, lng], {
-    icon: L.divIcon({
-      className: '',
-      html: `<div style="width:14px;height:14px;border:2px solid var(--ac);background:rgba(224,130,20,.2);box-shadow:0 0 12px rgba(224,130,20,.5);transform:rotate(45deg)"></div>`,
-      iconSize: [14, 14], iconAnchor: [7, 7],
-    }),
-  }).addTo(S.map);
-
-  if (!S.online) {
-    showMsg('Server offline — pixel queries unavailable');
-    return;
-  }
-
-  // Switch to pixel tab and open panel
-  switchTab('pixel');
-  if (!S.panelOpen) togglePanel();
-
-  // Show loading
-  document.getElementById('pixel-ph').style.display = 'none';
-  document.getElementById('cs-pixel').textContent = `Loading ${lat.toFixed(2)}°N, ${lng.toFixed(2)}°E…`;
-
 // Helper to format grid coordinates (match python static builder output)
 function formatGridCoord(val) {
   const rounded = Math.round(val * 4) / 4;
@@ -860,6 +830,11 @@ async function onMapClick(e) {
       iconSize: [14, 14], iconAnchor: [7, 7],
     }),
   }).addTo(S.map);
+
+  if (!S.online) {
+    showMsg('Server offline — pixel queries unavailable');
+    return;
+  }
 
   // Switch to pixel tab and open panel
   switchTab('pixel');
