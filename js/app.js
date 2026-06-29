@@ -54,12 +54,13 @@ const BASEMAPS = {
 
 // Chart.js defaults
 Chart.defaults.font.family = "'JetBrains Mono', 'IBM Plex Mono', monospace";
-Chart.defaults.font.size = 9;
-Chart.defaults.color = '#5d7a96';
+Chart.defaults.font.size = 13;
+Chart.defaults.color = '#e8edf4';
 Chart.defaults.plugins.legend.display = false;
 Chart.defaults.responsive = true;
 Chart.defaults.maintainAspectRatio = false;
 Chart.defaults.elements.line.tension = 0.35;
+Chart.defaults.elements.line.borderWidth = 3; // Make lines pop
 
 
 // ─── Initialization ────────────────────────────────────────────────────────
