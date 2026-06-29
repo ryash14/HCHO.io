@@ -435,8 +435,8 @@ html, body { height: 100%; overflow: hidden; font-family: var(--sans); color: va
   justify-content: center; gap: 8px; cursor: pointer; transition: background .1s;
 }
 #handle:hover { background: var(--bg3); }
-.hbar { width: 28px; height: 2px; background: var(--b2); border-radius: 1px; }
-.hlbl { font-family: var(--mono); font-size: 8px; letter-spacing: .1em; color: var(--t3); text-transform: uppercase; user-select: none; }
+.hbar { width: 36px; height: 3px; background: var(--b3); border-radius: 2px; }
+.hlbl { font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: .1em; color: var(--t0); text-transform: uppercase; user-select: none; }
 
 #panel {
   height: 0; flex-shrink: 0; overflow: hidden;
