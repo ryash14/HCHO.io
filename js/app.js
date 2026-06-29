@@ -504,7 +504,7 @@ function startWindAnimation() {
   if (!S.windField || S.windField.length === 0) return;
 
   // Create particles
-  const numParticles = Math.min(S.windField.length * 2, 600);
+  const numParticles = Math.min(S.windField.length * 3, 1500);
   S.windParticles = [];
 
   for (let i = 0; i < numParticles; i++) {
@@ -518,7 +518,7 @@ function startWindAnimation() {
 
     // Fade old trails using destination-out to preserve map visibility behind it
     ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.08)'; // Slower fade for longer, denser trails
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.globalCompositeOperation = 'source-over';
 
@@ -548,8 +548,9 @@ function startWindAnimation() {
         ctx.moveTo(pt1.x, pt1.y);
         ctx.lineTo(pt2.x, pt2.y);
         const alpha = Math.max(0, 1 - p.age / p.maxAge);
-        ctx.strokeStyle = getWindColor(wind.speed).replace(/[\d.]+\)$/, `${alpha * 0.7})`);
-        ctx.lineWidth = Math.min(1.5, 0.5 + wind.speed * 0.15);
+        // Make trails fully opaque and much thicker for PPT screenshots
+        ctx.strokeStyle = getWindColor(wind.speed).replace(/[\d.]+\)$/, `${alpha})`);
+        ctx.lineWidth = Math.min(2.5, 1.0 + wind.speed * 0.25);
         ctx.stroke();
       }
 
