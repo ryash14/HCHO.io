@@ -4,7 +4,15 @@ HCHO India Observatory explores processed atmospheric formaldehyde data alongsid
 
 A national atmospheric dataset is difficult to inspect as a collection of isolated files. The observatory places time-series and geographic views in one interface, allowing a reader to move between seasonal patterns, regional comparisons and supporting spatial layers.
 
-[Quick start](#quick-start) · [How it works](#how-it-works) · [Development](#development) · [Contributing](CONTRIBUTING.md)
+[Quick start](#quick-start) · [Architecture](#architecture-and-request-flow) · [Development](#development) · [Contributing](CONTRIBUTING.md)
+
+## Capabilities
+
+| Workflow | Result |
+|---|---|
+| Explore a region | Coordinate year, season and geographic filters. |
+| Inspect spatial context | Combine atmospheric layers, hotspots and trajectories. |
+| Compare patterns | Read time-series and regional charts from the processed dataset. |
 
 ## Quick start
 
@@ -27,14 +35,14 @@ The year and season controls select among processed assets, while map interactio
 
 Layers can combine observations and derived products with different assumptions. Consult the underlying metadata before comparing them; the site is an exploration interface rather than a replacement for the upstream scientific methods.
 
-## How it works
+## Architecture and request flow
 
 1. Select a year, season and region.
 2. Inspect the formaldehyde layer together with hotspot, fire or trajectory overlays.
 3. Open the chart panel to compare trends and nearby locations.
 4. Read the processed metadata to understand the available dataset coverage.
 
-### Component boundaries
+### Component model
 
 ```mermaid
 flowchart TB
@@ -48,7 +56,7 @@ flowchart TB
     Tiles["External basemap tiles"] --> Map
 ```
 
-### Design decisions
+### Engineering decisions
 
 The application loads precomputed JSON, GeoJSON and raster assets in the browser. Leaflet manages spatial layers and map interaction; Chart.js renders trend and comparison views. Client caches reduce repeated asset loading.
 
